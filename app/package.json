@@ -1,0 +1,12 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "Application source code and Docker artifacts live here.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
