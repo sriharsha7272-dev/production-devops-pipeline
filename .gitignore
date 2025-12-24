@@ -1,0 +1,22 @@
+cat <<EOF > .gitignore
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Docker
+*.tar
+
+# IDE
+.vscode/
+.idea/
+EOF
