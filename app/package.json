@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node server.js",
-
+    "start": "node src/index.js",
+    "test": "jest",
     "test:unit": "jest tests/unit",
-    "test:integration": "jest tests/integration --runInBand",
-    "test": "npm run test:unit"
+    "test:integration": "jest tests/integration"
   },
   "dependencies": {
     "express": "^4.19.0"
@@ -17,4 +16,3 @@
     "supertest": "^6.3.4"
   }
 }
-
