@@ -10,7 +10,12 @@ pipeline {
   stages {
 
     stage('Checkout') {
-      agent any
+      agent {
+        docker {
+          image 'alpine/git'
+          reuseNode true
+        }
+      }
       steps {
         checkout scm
       }
