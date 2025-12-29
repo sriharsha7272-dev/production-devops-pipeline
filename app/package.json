@@ -1,0 +1,20 @@
+{
+  "name": "prod-auth-service",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration --runInBand",
+    "test": "npm run test:unit"
+  },
+  "dependencies": {
+    "express": "^4.19.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  }
+}
+

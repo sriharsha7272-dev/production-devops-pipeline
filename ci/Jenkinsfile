@@ -1,43 +1,111 @@
 pipeline {
     agent any
 
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
     environment {
-        IMAGE_NAME = "prod-devops-app"
-        CONTAINER_NAME = "prod-devops-container"
+        APP_NAME    = "prod-devops-app"
+        IMAGE_REPO  = "yourdockerhubusername/prod-devops-app"
+        COMMIT_SHA = "${env.GIT_COMMIT.take(7)}"
+        NODE_ENV   = "test"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Static Validation') {
             steps {
                 sh '''
-                  docker build -t $IMAGE_NAME -f app/Dockerfile app
+                  test -f app/Dockerfile
+                  test -f app/package.json
+                  test -f app/package-lock.json
                 '''
             }
         }
 
-        stage('Run Container') {
+        stage('Install Dependencies') {
+            steps {
+                dir('app') {
+                    sh 'npm ci'
+                }
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                dir('app') {
+                    sh 'npm test'
+                }
+            }
+        }
+
+        stage('Integration Tests') {
+            when {
+                branch 'dev'
+            }
+            steps {
+                dir('app') {
+                    sh 'npm run test:integration'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            when {
+                anyOf {
+                    branch 'dev'
+                    branch 'main'
+                }
+            }
             steps {
                 sh '''
-                  docker rm -f $CONTAINER_NAME || true
-                  docker run -d --name $CONTAINER_NAME -p 3000:3000 $IMAGE_NAME
+                  docker build \
+                    -t $IMAGE_REPO:$COMMIT_SHA \
+                    -f app/Dockerfile app
                 '''
+            }
+        }
+
+        stage('Push Docker Image (main only)') {
+            when {
+                branch 'main'
+            }
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                      docker push $IMAGE_REPO:$COMMIT_SHA
+                    '''
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline executed successfully'
+            echo "Pipeline succeeded for ${env.BRANCH_NAME}"
+            echo "Image: $IMAGE_REPO:$COMMIT_SHA"
         }
+
         failure {
-            echo 'Pipeline failed'
+            echo "Pipeline failed — build blocked"
+        }
+
+        cleanup {
+            sh 'docker system prune -f || true'
         }
     }
 }
+
