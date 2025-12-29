@@ -4,10 +4,9 @@
   "private": true,
   "scripts": {
     "start": "node src/index.js",
-    "test": "jest",
+    "test": "jest --runInBand --forceExit",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration"
-    "test": "jest --runInBand --forceExit"
   },
   "dependencies": {
     "express": "^4.19.0"
@@ -17,3 +16,4 @@
     "supertest": "^6.3.4"
   }
 }
+
