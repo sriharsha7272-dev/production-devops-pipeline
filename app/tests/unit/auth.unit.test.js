@@ -1,4 +1,4 @@
-const { signup, login } = require("../../app/services/auth.service");
+const { signup, login } = require("../../services/auth.service");
 
 describe("Auth Service – Unit Tests", () => {
 

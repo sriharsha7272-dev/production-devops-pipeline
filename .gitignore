@@ -20,3 +20,5 @@ cat <<EOF > .gitignore
 .vscode/
 .idea/
 EOF
+
+app/node_modules/

@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
 
     options {
         timestamps()
@@ -16,12 +16,14 @@ pipeline {
     stages {
 
         stage('Checkout') {
+            agent any
             steps {
                 checkout scm
             }
         }
 
         stage('Static Validation') {
+            agent any
             steps {
                 sh '''
                   test -f app/Dockerfile
@@ -31,25 +33,28 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                dir('app') {
-                    sh 'npm ci'
+        stage('Install + Unit Tests') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
                 }
             }
-        }
-
-        stage('Unit Tests') {
             steps {
                 dir('app') {
-                    sh 'npm test'
+                    sh '''
+                      npm ci
+                      npm test
+                    '''
                 }
             }
         }
 
         stage('Integration Tests') {
-            when {
-                branch 'dev'
+            when { branch 'dev' }
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                }
             }
             steps {
                 dir('app') {
@@ -58,25 +63,15 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            when {
-                anyOf {
-                    branch 'dev'
-                    branch 'main'
-                }
-            }
-            steps {
-                sh '''
-                  docker build \
-                    -t $IMAGE_REPO:$COMMIT_SHA \
-                    -f app/Dockerfile app
-                '''
-            }
-        }
-
-        stage('Push Docker Image (main only)') {
+        stage('Build & Push Docker Image') {
             when {
                 branch 'main'
+            }
+            agent {
+                docker {
+                    image 'docker:27-cli'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -86,6 +81,7 @@ pipeline {
                 )]) {
                     sh '''
                       echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                      docker build -t $IMAGE_REPO:$COMMIT_SHA -f app/Dockerfile app
                       docker push $IMAGE_REPO:$COMMIT_SHA
                     '''
                 }
@@ -94,17 +90,8 @@ pipeline {
     }
 
     post {
-        success {
-            echo "Pipeline succeeded for ${env.BRANCH_NAME}"
-            echo "Image: $IMAGE_REPO:$COMMIT_SHA"
-        }
-
         failure {
             echo "Pipeline failed — build blocked"
-        }
-
-        cleanup {
-            sh 'docker system prune -f || true'
         }
     }
 }
