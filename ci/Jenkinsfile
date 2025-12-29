@@ -7,10 +7,9 @@ pipeline {
     }
 
     environment {
-        APP_NAME    = "prod-devops-app"
-        IMAGE_REPO  = "yourdockerhubusername/prod-devops-app"
-        COMMIT_SHA = "${env.GIT_COMMIT.take(7)}"
-        NODE_ENV   = "test"
+        APP_NAME   = "prod-devops-app"
+        IMAGE_REPO = "yourdockerhubusername/prod-devops-app"
+        NODE_ENV  = "test"
     }
 
     stages {
@@ -19,6 +18,13 @@ pipeline {
             agent any
             steps {
                 checkout scm
+                script {
+                    // Compute commit SHA AFTER checkout
+                    env.COMMIT_SHA = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                    ).trim()
+                }
             }
         }
 
@@ -50,7 +56,9 @@ pipeline {
         }
 
         stage('Integration Tests') {
-            when { branch 'dev' }
+            when {
+                branch 'dev'
+            }
             agent {
                 docker {
                     image 'node:18-alpine'
@@ -90,9 +98,10 @@ pipeline {
     }
 
     post {
-        failure {
-            echo "Pipeline failed — build blocked"
+        success {
+            echo "Pipeline succeeded on branch: ${env.BRANCH_NAME}"
+            echo "Image tag: ${IMAGE_REPO}:${COMMIT_SHA}"
         }
-    }
-}
+
+        failure {
 
