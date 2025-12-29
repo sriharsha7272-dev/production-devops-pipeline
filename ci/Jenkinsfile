@@ -9,7 +9,7 @@ pipeline {
     environment {
         APP_NAME   = "prod-devops-app"
         IMAGE_REPO = "yourdockerhubusername/prod-devops-app"
-        NODE_ENV  = "test"
+        NODE_ENV   = "test"
     }
 
     stages {
@@ -19,9 +19,8 @@ pipeline {
             steps {
                 checkout scm
                 script {
-                    // Compute commit SHA AFTER checkout
                     env.COMMIT_SHA = sh(
-                        script: "git rev-parse --short HEAD",
+                        script: 'git rev-parse --short HEAD',
                         returnStdout: true
                     ).trim()
                 }
@@ -102,6 +101,8 @@ pipeline {
             echo "Pipeline succeeded on branch: ${env.BRANCH_NAME}"
             echo "Image tag: ${IMAGE_REPO}:${COMMIT_SHA}"
         }
-
         failure {
-
+            echo "Pipeline failed — build blocked"
+        }
+    }
+}
