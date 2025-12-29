@@ -1,7 +1,13 @@
 const request = require("supertest");
-const app = require("../../server");
+const { app, server } = require("../../server");
 
 describe("Auth API – Integration Tests", () => {
+
+  afterAll(() => {
+    if (server) {
+      server.close();
+    }
+  });
 
   test("POST /auth/signup", async () => {
     const res = await request(app)
@@ -20,3 +26,4 @@ describe("Auth API – Integration Tests", () => {
   });
 
 });
+
