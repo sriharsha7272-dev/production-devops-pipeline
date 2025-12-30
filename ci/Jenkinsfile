@@ -1,5 +1,10 @@
 pipeline {
-  agent any
+  agent {
+    docker {
+      image 'node:18-alpine'
+      args '-v /var/run/docker.sock:/var/run/docker.sock'
+    }
+  }
 
   options {
     timestamps()
@@ -23,6 +28,8 @@ pipeline {
     stage('Install Dependencies') {
       steps {
         sh '''
+          node -v
+          npm -v
           npm ci
         '''
       }
@@ -37,19 +44,12 @@ pipeline {
     }
 
     stage('Docker Build') {
-      when {
-        anyOf {
-          branch 'dev'
-          branch 'main'
-        }
-      }
       steps {
         sh '''
           docker build -t ${APP_NAME}:${IMAGE_TAG} .
         '''
       }
     }
-
   }
 
   post {
@@ -58,9 +58,6 @@ pipeline {
     }
     failure {
       echo "Pipeline failed for ${env.BRANCH_NAME}"
-    }
-    always {
-      echo "Build finished"
     }
   }
 }
