@@ -1,62 +1,66 @@
 pipeline {
-  agent none
+  agent any
 
   options {
     timestamps()
-    disableConcurrentBuilds()
     timeout(time: 20, unit: 'MINUTES')
+    disableConcurrentBuilds()
+  }
+
+  environment {
+    APP_NAME  = "prod-app"
+    IMAGE_TAG = "${BUILD_NUMBER}"
   }
 
   stages {
 
     stage('Checkout') {
-      agent {
-        docker {
-          image 'alpine/git'
-          reuseNode true
-        }
-      }
       steps {
         checkout scm
       }
     }
 
-    stage('Unit Tests') {
-      agent {
-        docker {
-          image 'node:18-alpine'
-          reuseNode true
-        }
-      }
+    stage('Install Dependencies') {
       steps {
         sh '''
           npm ci
+        '''
+      }
+    }
+
+    stage('Unit Tests') {
+      steps {
+        sh '''
           npm test || true
         '''
       }
     }
 
     stage('Docker Build') {
-      agent {
-        docker {
-          image 'docker:25'
-          args '-v /var/run/docker.sock:/var/run/docker.sock'
+      when {
+        anyOf {
+          branch 'dev'
+          branch 'main'
         }
       }
       steps {
         sh '''
-          docker build -t prod-app:${BUILD_NUMBER} .
+          docker build -t ${APP_NAME}:${IMAGE_TAG} .
         '''
       }
     }
+
   }
 
   post {
     success {
-      echo 'Pipeline completed successfully'
+      echo "Pipeline completed successfully for ${env.BRANCH_NAME}"
     }
     failure {
-      echo 'Pipeline failed'
+      echo "Pipeline failed for ${env.BRANCH_NAME}"
+    }
+    always {
+      echo "Build finished"
     }
   }
 }
