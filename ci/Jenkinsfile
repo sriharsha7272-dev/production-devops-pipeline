@@ -28,6 +28,7 @@ pipeline {
     stage('Install Dependencies') {
       steps {
         sh '''
+          cd app
           node -v
           npm -v
           npm ci
@@ -38,6 +39,7 @@ pipeline {
     stage('Unit Tests') {
       steps {
         sh '''
+          cd app
           npm test || true
         '''
       }
@@ -46,7 +48,7 @@ pipeline {
     stage('Docker Build') {
       steps {
         sh '''
-          docker build -t ${APP_NAME}:${IMAGE_TAG} .
+          docker build -t ${APP_NAME}:${IMAGE_TAG} -f app/Dockerfile app
         '''
       }
     }
