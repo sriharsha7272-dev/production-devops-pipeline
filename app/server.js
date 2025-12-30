@@ -1,18 +1,24 @@
 const express = require("express");
+const bodyParser = require("body-parser");
+
 const authRoutes = require("./routes/auth.routes");
 
 const app = express();
-app.use(express.json());
 
+app.use(bodyParser.json());
 app.use("/auth", authRoutes);
 
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "UP" });
-});
+/**
+ * Start server ONLY when not required by tests
+ * This prevents double listeners in Jest
+ */
+let server;
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+  server = app.listen(3000, () => {
+    console.log("Server running on port 3000");
+  });
+}
 
-module.exports = app;
+module.exports = { app, server };
+
