@@ -1,10 +1,5 @@
 pipeline {
-  agent {
-    docker {
-      image 'node:18-alpine'
-      args '-v /var/run/docker.sock:/var/run/docker.sock'
-    }
-  }
+  agent any
 
   options {
     timestamps()
@@ -25,29 +20,33 @@ pipeline {
       }
     }
 
-    stage('Install Dependencies') {
+    stage('Install Dependencies & Tests') {
+      agent {
+        docker {
+          image 'node:18-alpine'
+        }
+      }
       steps {
         sh '''
           cd app
           node -v
           npm -v
           npm ci
-        '''
-      }
-    }
-
-    stage('Unit Tests') {
-      steps {
-        sh '''
-          cd app
-          npm test || true
+          npm test
         '''
       }
     }
 
     stage('Docker Build') {
+      agent {
+        docker {
+          image 'docker:25'
+          args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+      }
       steps {
         sh '''
+          docker version
           docker build -t ${APP_NAME}:${IMAGE_TAG} -f app/Dockerfile app
         '''
       }
