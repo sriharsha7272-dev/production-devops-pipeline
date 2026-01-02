@@ -1,4 +1,3 @@
-cat <<EOF > .gitignore
 # OS files
 .DS_Store
 
@@ -8,10 +7,16 @@ cat <<EOF > .gitignore
 # Environment variables
 .env
 
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
 # Terraform
 .terraform/
 *.tfstate
 *.tfstate.*
+.terraform.lock.hcl
 
 # Docker
 *.tar
@@ -19,6 +24,3 @@ cat <<EOF > .gitignore
 # IDE
 .vscode/
 .idea/
-EOF
-
-app/node_modules/
