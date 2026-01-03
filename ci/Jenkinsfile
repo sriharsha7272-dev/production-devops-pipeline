@@ -52,6 +52,16 @@ pipeline {
         '''
       }
     }
+
+    /* 👇 THIS IS THE ONLY NEW PART */
+    stage('Main Branch Check') {
+      when {
+        branch 'main'
+      }
+      steps {
+        echo "This is MAIN branch – safe to deploy later"
+      }
+    }
   }
 
   post {
