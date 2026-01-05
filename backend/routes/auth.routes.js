@@ -1,121 +1,70 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-const authMiddleware = require("../middleware/auth.middleware");
-
 const router = express.Router();
+const User = require("../models/User");
 
-/**
- * @route   POST /api/auth/register
- * @desc    Register a new user
- * @access  Public
- */
+// REGISTER
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { email, password } = req.body;
 
-    // Validation
-    if (!username || !email || !password) {
-      return res.status(400).json({
-        message: "Username, email, and password are required"
-      });
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
-    // Check if user already exists
-    const exists = await User.findOne({ email });
-    if (exists) {
-      return res.status(400).json({
-        message: "User already exists"
-      });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "User already exists" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
-    await User.create({
-      username,
+    const user = await User.create({
       email,
-      password: hashedPassword
+      password: hashedPassword,
     });
 
     return res.status(201).json({
-      message: "Registered successfully"
+      message: "User registered successfully",
+      userId: user._id,
     });
-  } catch (error) {
-    console.error("Register Error:", error);
-    return res.status(500).json({
-      message: "Server error"
-    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Registration failed" });
   }
 });
 
-/**
- * @route   POST /api/auth/login
- * @desc    Login user and return JWT
- * @access  Public
- */
+// LOGIN
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
     if (!email || !password) {
-      return res.status(400).json({
-        message: "Email and password are required"
-      });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({
-        message: "Invalid credentials"
-      });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({
-        message: "Invalid credentials"
-      });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Create JWT
-    const token = jwt.sign(
-      {
-        id: user._id,
-        username: user.username
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    return res.json({
-      token,
-      user: {
-        username: user.username
-      }
+    return res.status(200).json({
+      message: "Login successful",
+      userId: user._id,
     });
-  } catch (error) {
-    console.error("Login Error:", error);
-    return res.status(500).json({
-      message: "Server error"
-    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Login failed" });
   }
-});
-
-/**
- * @route   GET /api/auth/me
- * @desc    Get logged-in user details
- * @access  Private
- */
-router.get("/me", authMiddleware, (req, res) => {
-  return res.json({
-    username: req.user.username
-  });
 });
 
 module.exports = router;
