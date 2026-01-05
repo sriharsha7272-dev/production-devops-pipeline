@@ -1,36 +1,44 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardPage() {
-  const { isAuthenticated, logout } = useAuth();
   const router = useRouter();
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
-    }
-  }, [isAuthenticated, router]);
+    const token = localStorage.getItem("token");
 
-  if (!isAuthenticated) return null;
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    fetch("http://localhost:5000/api/auth/me", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Unauthorized");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setUsername(data.username);
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+        router.push("/login");
+      });
+  }, [router]);
 
   return (
-    <section className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <button
-          onClick={logout}
-          className="text-sm underline"
-        >
-          Logout
-        </button>
-      </div>
-
-      <p className="text-gray-600">
-        You are authenticated using JWT.
-      </p>
-    </section>
+    <div style={{ padding: "40px" }}>
+      <h1>Dashboard</h1>
+      {username ? <h2>Welcome, {username}</h2> : <p>Loading...</p>}
+    </div>
   );
 }

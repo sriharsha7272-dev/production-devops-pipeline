@@ -1,62 +1,121 @@
-import express from "express";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+const authMiddleware = require("../middleware/auth.middleware");
 
 const router = express.Router();
 
 /**
- * TEMP USER (in-memory)
- * Replace with DB later
+ * @route   POST /api/auth/register
+ * @desc    Register a new user
+ * @access  Public
  */
-const user = {
-  id: "1",
-  name: "Sri Harsha",
-  email: "psriharsha567@gmail.com",
-  password: bcrypt.hashSync("password123", 10)
-};
+router.post("/register", async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    // Validation
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        message: "Username, email, and password are required"
+      });
+    }
+
+    // Check if user already exists
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res.status(400).json({
+        message: "User already exists"
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    await User.create({
+      username,
+      email,
+      password: hashedPassword
+    });
+
+    return res.status(201).json({
+      message: "Registered successfully"
+    });
+  } catch (error) {
+    console.error("Register Error:", error);
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
+});
 
 /**
- * LOGIN
+ * @route   POST /api/auth/login
+ * @desc    Login user and return JWT
+ * @access  Public
  */
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Missing credentials" });
-  }
-
-  if (email !== user.email) {
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
-
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) {
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
-
-  const token = jwt.sign(
-    { id: user.id, email: user.email },
-    "dev-secret",
-    { expiresIn: "1d" }
-  );
-
-  res.status(200).json({
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required"
+      });
     }
-  });
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid credentials"
+      });
+    }
+
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid credentials"
+      });
+    }
+
+    // Create JWT
+    const token = jwt.sign(
+      {
+        id: user._id,
+        username: user.username
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    return res.json({
+      token,
+      user: {
+        username: user.username
+      }
+    });
+  } catch (error) {
+    console.error("Login Error:", error);
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
 });
 
 /**
- * REGISTER (placeholder)
+ * @route   GET /api/auth/me
+ * @desc    Get logged-in user details
+ * @access  Private
  */
-router.post("/register", (req, res) => {
-  res.status(201).json({
-    message: "Registration endpoint ready (DB integration pending)"
+router.get("/me", authMiddleware, (req, res) => {
+  return res.json({
+    username: req.user.username
   });
 });
 
-export default router;
+module.exports = router;

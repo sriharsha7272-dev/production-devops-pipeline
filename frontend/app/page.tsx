@@ -1,67 +1,30 @@
-import Link from "next/link";
+import LoginCard from "@/components/LoginCard";
+import RegisterCard from "@/components/RegisterCard";
 
 export default function Home() {
   return (
-    <section className="space-y-16">
-      {/* Hero Section */}
-      <div className="text-center space-y-6">
-        <h1 className="text-4xl font-bold">
-          Production-Ready Web Application
-        </h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          A modern full-stack web application built with Next.js, Node.js,
-          Docker, and CI/CD best practices.
-        </p>
+    <main className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
 
-        <div className="flex justify-center gap-4">
-          <Link
-            href="#features"
-            className="px-6 py-3 bg-black text-white rounded-md"
-          >
-            View Features
-          </Link>
-          <Link
-            href="#"
-            className="px-6 py-3 border rounded-md"
-          >
-            Documentation
-          </Link>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div id="features" className="grid md:grid-cols-3 gap-6">
-        <div className="border rounded-lg p-6">
-          <h3 className="font-semibold text-lg mb-2">Frontend</h3>
-          <p className="text-gray-600">
-            Built using Next.js App Router with clean layout, loading states,
-            and scalable architecture.
+      {/* LEFT */}
+      <section className="flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-8">
+        <div className="max-w-md w-full">
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Welcome Back!
+          </h1>
+          <p className="text-slate-300 mb-10">
+            Sign in to access your account and continue your journey with us.
           </p>
-        </div>
 
-        <div className="border rounded-lg p-6">
-          <h3 className="font-semibold text-lg mb-2">Backend</h3>
-          <p className="text-gray-600">
-            Node.js and Express backend designed for REST APIs, authentication,
-            and service-based architecture.
-          </p>
+          <LoginCard />
         </div>
+      </section>
 
-        <div className="border rounded-lg p-6">
-          <h3 className="font-semibold text-lg mb-2">DevOps</h3>
-          <p className="text-gray-600">
-            Dockerized services, Jenkins pipelines, and environment-based
-            deployments following real-world DevOps workflows.
-          </p>
+      {/* RIGHT */}
+      <section className="flex items-center justify-center bg-gray-50 px-8">
+        <div className="max-w-md w-full">
+          <RegisterCard />
         </div>
-      </div>
-
-      {/* Footer CTA */}
-      <div className="text-center pt-10 border-t">
-        <p className="text-gray-600">
-          Designed and built with production standards in mind.
-        </p>
-      </div>
-    </section>
+      </section>
+    </main>
   );
 }
