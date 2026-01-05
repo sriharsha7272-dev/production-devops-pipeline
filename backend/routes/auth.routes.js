@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const User = require("../models/User");
+const authMiddleware = require("../middleware/auth.middleware");
 
 // REGISTER
 router.post("/register", async (req, res) => {
@@ -10,9 +11,7 @@ router.post("/register", async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -27,25 +26,22 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "User registered successfully",
       userId: user._id,
     });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Registration failed" });
+    res.status(500).json({ message: "Registration failed" });
   }
 });
 
-// LOGIN (JWT ISSUED HERE)
+// LOGIN
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     const user = await User.findOne({ email });
@@ -58,21 +54,33 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // 🔐 JWT creation
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    return res.status(200).json({
+    res.json({
       message: "Login successful",
       token,
-      userId: user._id,
     });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Login failed" });
+    res.status(500).json({ message: "Login failed" });
+  }
+});
+
+// 🔐 CURRENT USER (PROTECTED)
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch user" });
   }
 });
 

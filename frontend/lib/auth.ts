@@ -1,41 +1,14 @@
-// frontend/lib/auth.ts
-
-import { setToken } from "./token";
-
-const API_BASE_URL =
+const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-export async function login(email: string, password: string) {
-  const res = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Login failed: ${text}`);
-  }
-
-  const data = await res.json();
-
-  // 🔐 STORE JWT
-  if (data.token) {
-    setToken(data.token);
-  }
-
-  return data;
+export interface AuthPayload {
+  email: string;
+  password: string;
 }
 
-export async function register(payload: {
-  name: string;
-  email: string;
-  phone: string;
-  password: string;
-}) {
-  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+// REGISTER
+export async function register(payload: AuthPayload) {
+  const response = await fetch(`${API_URL}/api/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -43,10 +16,30 @@ export async function register(payload: {
     body: JSON.stringify(payload),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Register failed: ${text}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Registration failed");
   }
 
-  return res.json();
+  return data;
+}
+
+// LOGIN
+export async function login(payload: AuthPayload) {
+  const response = await fetch(`${API_URL}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Login failed");
+  }
+
+  return data; // { message, token, userId }
 }

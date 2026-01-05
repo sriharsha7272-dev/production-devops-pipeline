@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://52.66.107.237:4000";
+
 export default function DashboardPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -15,19 +18,17 @@ export default function DashboardPage() {
       return;
     }
 
-    fetch("http://localhost:5000/api/auth/me", {
+    fetch(`${API_URL}/api/auth/me`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("Unauthorized");
-        }
+        if (!res.ok) throw new Error("Unauthorized");
         return res.json();
       })
       .then((data) => {
-        setUsername(data.username);
+        setEmail(data.email);
       })
       .catch(() => {
         localStorage.removeItem("token");
@@ -36,9 +37,9 @@ export default function DashboardPage() {
   }, [router]);
 
   return (
-    <div style={{ padding: "40px" }}>
+    <main style={{ padding: "40px" }}>
       <h1>Dashboard</h1>
-      {username ? <h2>Welcome, {username}</h2> : <p>Loading...</p>}
-    </div>
+      {email ? <h2>Welcome, {email}</h2> : <p>Loading...</p>}
+    </main>
   );
 }
