@@ -1,3 +1,5 @@
+'use client';
+
 import LoginCard from "@/components/LoginCard";
 import RegisterCard from "@/components/RegisterCard";
 
@@ -24,4 +26,8 @@ export default function Home() {
         <div className="max-w-md w-full">
           <RegisterCard />
         </div>
-      </s
+      </section>
+
+    </main>
+  );
+}
