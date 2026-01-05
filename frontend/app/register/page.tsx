@@ -1,65 +1,88 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
+  const router = useRouter();
+
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ name, email, password });
-    // backend integration later
-  }
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Registration failed");
+        return;
+      }
+
+      alert("Registration successful");
+      router.push("/login");
+    } catch (error) {
+      alert("Backend not reachable");
+    }
+  };
 
   return (
-    <div className="max-w-md mx-auto mt-20 border p-6 rounded-lg">
-      <h1 className="text-2xl font-bold mb-6 text-center">Register</h1>
+    <div style={{ padding: "40px" }}>
+      <h1>Create Account</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Full Name"
-          className="w-full border p-2 rounded"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
+      <form onSubmit={handleRegister}>
+        <div>
+          <label>Username</label><br />
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full border p-2 rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <br />
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full border p-2 rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div>
+          <label>Email</label><br />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-        <button
-          type="submit"
-          className="w-full bg-black text-white p-2 rounded"
-        >
-          Create Account
-        </button>
+        <br />
+
+        <div>
+          <label>Password</label><br />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        <br />
+
+        <button type="submit">Create Account</button>
       </form>
-
-      <p className="text-sm text-center mt-4">
-        Already have an account?{" "}
-        <Link href="/login" className="underline">
-          Login
-        </Link>
-      </p>
     </div>
   );
 }
